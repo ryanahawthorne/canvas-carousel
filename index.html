@@ -16,36 +16,12 @@
     <canvas id="canvas" width="1280" height="720" style="background-color: #222;">
     </canvas>
 
-
+    <script src="./hover.js"></script>
     <script>
 
         const easeOutQuint = (delta) => {
             return 1 - Math.pow(1 - delta, 5);
         }
-
-        const urlArray = [
-            'pSh8MyYu5CmfyWEHzv8FEARH2zq',
-            'qsdjk9oAKSQMWs0Vt5Pyfh6O4GZ',
-            '1g0dhYtq4irTY1GPXvft6k4YLjm',
-            'wFjboE0aFZNbVOF05fzrka9Fqyx',
-            'bv9dy8mnwftdY2j6gG39gCfSFpV',
-            '4j0PNHkMr5ax3IA8tjtxcmPU3QT',
-            '5cnLoWq9o5tuLe1Zq4BTX4LwZ2B',
-            '74xTEgt7R36Fpooo50r9T25onhq',
-            'ejXBuNLvK4kZ7YcqeKqUWnCxdJq',
-            '9MP21x0OPv0R72obd63tMHssmGt',
-            'teCy1egGQa0y8ULJvlrDHQKnxBL',
-            'aq4Pwv5Xeuvj6HZKtxyd23e6bE9',
-            '4NUzcKtYPKkfTwKsLjwNt8nRIXV',
-            'okNgwtxIWzGsNlR3GsOS0i0Qgbn',
-            '7pYYGm1dWZGkbJuhcuaHD6nE6k7',
-            'kZNHR1upJKF3eTzdgl5V8s8a4C3',
-            'bcCBq9N1EMo3daNIjWJ8kYvrQm6',
-            'aWeKITRFbbwY8txG5uCj4rMCfSP',
-            'mn1GYIQ1tvFuuu0YBNZBvrHyrkO',
-            'i0z8g2VRZP3dhVvvSMilbOZMKqR',
-            '3Ib8vlWTrAKRrTWUrTrZPOMW4jp',
-        ];
 
         // BUGS
         // initial image drawing ignores scaling and modified position
@@ -238,6 +214,20 @@
             }
         };
 
+        const loadImageArray = (urlInput) => {
+            const defaultUrl = `https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53`;
+            const url = urlInput ? urlInput : defaultUrl;
+            return fetch(url, {
+                method: 'GET'
+            }).then(function (response) {
+                if (response.ok) {
+                    return response.json()
+                } else {
+                    return Promise.reject(response);
+                }
+            })
+        }
+
         const loadImage = (urlIn) => {
             const defaultImage = `https://image.tmdb.org/t/p/w${imageWidth}/${urlIn}.jpg`;
             const url = urlIn ? urlIn : defaultImage;
@@ -251,29 +241,32 @@
 
         // once an image has loaded it's image, redraw it with the correct image rather than the default
         const updateImages = () => {
-            urlArray.forEach((imageUrl, index) => {
-                const rowNum = Math.floor(index / imagesPerRow);
-                const imageNum = index - (rowNum * imagesPerRow);
-                const fullImageUrl = `https://image.tmdb.org/t/p/w${imageWidth}/${imageUrl}.jpg`;
-                loadImage(fullImageUrl).then(image => { // TODO callback to render image after loading is very basic and should instead draw the image based on it's real location in case things load in late
-                    // update the data
-                    rowsData[rowNum].images[imageNum].image = image;
-                    const { translateX } = rowsData[rowNum];
-                    const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
+            loadImageArray().then(function (data) {
+                data.results.forEach((image, index) => {
+                    const rowNum = Math.floor(index / imagesPerRow);
+                    const imageNum = index - (rowNum * imagesPerRow);
+                    const fullImageUrl = `https://image.tmdb.org/t/p/w${imageWidth}${image.poster_path}`;
+                    // backdrop_path can be used for the background images on focus
+                    loadImage(fullImageUrl).then(image => { // TODO callback to render image after loading is very basic and should instead draw the image based on it's real location in case things load in late
+                        // update the data
+                        rowsData[rowNum].images[imageNum].image = image;
+                        const { translateX } = rowsData[rowNum];
+                        const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
 
-                    // but also draw the image just now
-                    const xPos = applyTranslate(cardOriginalPositionX + selectedCardTargetPositionX, translateX);
-                    const yPos = applyTranslate(cardOriginalPositionY + selectedCardTargetPositionY, translateY);
-                    // TODO this bit forgets image scaling
+                        // but also draw the image just now
+                        const xPos = applyTranslate(cardOriginalPositionX + selectedCardTargetPositionX, translateX);
+                        const yPos = applyTranslate(cardOriginalPositionY + selectedCardTargetPositionY, translateY);
+                        // TODO this bit forgets image scaling
 
-                    // TODO remove this HACK - as this is not currently calculating image scaling - skip drawing first image
-                    if ( (xPos === selectedCardTargetPositionX) && yPos === selectedCardTargetPositionY ) {
-                        return;
-                    }
-                    if (shouldRender(xPos, xPos + imageWidth, yPos, yPos + imageHeight)) {
-                        ctx.drawImage(image, xPos, yPos, imageWidth, imageHeight);
-                    }
-                });
+                        // TODO remove this HACK - as this is not currently calculating image scaling - skip drawing first image
+                        if ((xPos === selectedCardTargetPositionX) && yPos === selectedCardTargetPositionY) {
+                            return;
+                        }
+                        if (shouldRender(xPos, xPos + imageWidth, yPos, yPos + imageHeight)) {
+                            ctx.drawImage(image, xPos, yPos, imageWidth, imageHeight);
+                        }
+                    });
+                })
             })
         }
 
