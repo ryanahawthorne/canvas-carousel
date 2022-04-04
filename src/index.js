@@ -9,6 +9,7 @@ function App() {
 
     return (
         <QueryClientProvider client={queryClient}>
+            {/* components here */}
             <ReactQueryDevtools initialIsOpen />
         </QueryClientProvider>
     )
