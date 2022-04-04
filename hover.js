@@ -1,3 +1,1 @@
-const drawOverlay = (ctx) => {
-    
-}
+const drawOverlay = (ctx) => {};
