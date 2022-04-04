@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "analyse": "node ./node_modules/webpack/bin/webpack.js --config=./webpack.config.js --progress --env nodeEnv=production --env platform=generic --env dtmEnv=production --env isProduction=true --env analyse=true --color",
     "lint": "eslint src/**"
   },
   "author": "",

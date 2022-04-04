@@ -12,7 +12,7 @@ function App() {
             {/* components here */}
             <ReactQueryDevtools initialIsOpen />
         </QueryClientProvider>
-    )
+    );
 }
 
 const rootElement = document.getElementById("root");
