@@ -20,12 +20,15 @@
     "@babel/preset-env": "^7.15.0",
     "@babel/preset-react": "^7.10.1",
     "@babel/runtime": "^7.10.3",
+    "@types/jest": "^26.0.5",
+    "@types/node": "^14.17.12",
     "@webpack-cli/serve": "^1.5.1",
     "acorn": "^8.4.1",
     "babel-eslint": "^10.1.0",
     "babel-jest": "27.0.6",
     "babel-loader": "^8.1.0",
     "canvas": "^2.6.1",
+    "copy-webpack-plugin": "^9.0.1",
     "ejs-webpack-loader": "2.2.2",
     "eslint": "^7.2.0",
     "eslint-config-airbnb": "^18.2.0",
@@ -46,9 +49,12 @@
   },
   "dependencies": {
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "html-webpack-plugin": "^5.3.2",
     "react": "^16.13.1",
     "react-dom": "^18.0.0",
     "react-query": "^3.34.19",
+    "style-loader": "^3.2.1",
+    "styled-components": "5.3.3",
     "webpack-bundle-analyzer": "^4.4.2"
   }
 }
