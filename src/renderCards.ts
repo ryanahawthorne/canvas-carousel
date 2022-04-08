@@ -12,25 +12,26 @@ import {
     WIDTH,
     HEIGHT,
     USE_PORTAL_SCALING,
-} from './constants.js'
+} from './constants'
+import { RowObjectType } from './types';
 
 let portalWidth = WIDTH;
 let portalHeight = HEIGHT;
 
 
 // TODO move these to helper functions class
-const applyTranslate = (positionIn, translateIn) => {
+const applyTranslate = (positionIn: number, translateIn: number) => {
     return positionIn - translateIn;
 };
 
-const easeOutQuint = (delta) => {
+const easeOutQuint = (delta: number) => {
     return 1 - Math.pow(1 - delta, 5);
 }
 
-const drawScaledFocusHighlight = (ctx, highlightedXIn, highlightedYIn, imageScaling) => {
+const drawScaledFocusHighlight = (ctx: CanvasRenderingContext2D, highlightedXIn: number, highlightedYIn: number, imageScaling: number) => {
     const xOffset = ((IMAGE_WIDTH * imageScaling) - IMAGE_WIDTH) / 2;
     const yOffset = ((IMAGE_HEIGHT * imageScaling) - IMAGE_HEIGHT) / 2;
-    ctx.lineWidth = "5";
+    ctx.lineWidth = 5;
     ctx.strokeStyle = "#ccc";
     ctx.beginPath();
     ctx.rect(
@@ -43,44 +44,45 @@ const drawScaledFocusHighlight = (ctx, highlightedXIn, highlightedYIn, imageScal
 };
 
 
-export const drawCanvasBorder = (ctx) => {
-    ctx.lineWidth = "3";
+export const drawCanvasBorder = (ctx: CanvasRenderingContext2D) => {
+    ctx.lineWidth = 3;
     ctx.strokeStyle = "darkgreen";
     ctx.beginPath();
     ctx.rect(0, 0, portalWidth, portalWidth / ASPECT_RATIO);
     ctx.stroke();
 }
 
-export const clearPortal = (ctx) => {
+export const clearPortal = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, portalWidth, portalHeight);
 }
 
-const shouldRender = (xLeft, xRight, yTop, yBottom) => {
+const shouldRender = (xLeft: number, xRight: number, yTop: number, yBottom: number) => {
     return (xLeft < WIDTH && xRight > 0 && yTop < HEIGHT && yBottom > 0);
 };
 
-const getAlpha = (xPos) => {
+const getAlpha = (xPos: number) => {
     if (!ALPHA_ANIMATIONS) {
         return 1;
     }
     if (xPos < TARGET_POSITION_X) {
         return getLeftAlpha(xPos);
     } else if (xPos > WIDTH - IMAGE_WIDTH) {
-        return getRightAlpha(xPos, WIDTH);
+        return getRightAlpha(xPos);
     }
     return 1;
 };
 
 // fade images as they move off to the left
-const getLeftAlpha = (xPos) => {
+const getLeftAlpha = (xPos: number) => {
     return Math.max((xPos+IMAGE_WIDTH) / LEFT_ALPHA_LIMIT, 0.2);
 };
+
 // fade images out as they move off to the right
-const getRightAlpha = (xPos) => {
+const getRightAlpha = (xPos: number) => {
     return Math.max(((WIDTH - xPos) / IMAGE_WIDTH), 0.2);
 };
 
-export const drawScaledCard = (ctx, image, xPos, yPos) => {
+export const drawScaledCard = (ctx: CanvasRenderingContext2D, image: CanvasImageSource, xPos: number, yPos: number) => {
     if (shouldRender(xPos, xPos + IMAGE_WIDTH, yPos, yPos + IMAGE_HEIGHT)) {
         const isHighlightedImage = ((xPos === TARGET_POSITION_X) && yPos === TARGET_POSITION_Y);
         const imageScaling = isHighlightedImage ? 1 + IMAGE_SCALING_MAX : 1
@@ -104,7 +106,7 @@ export const drawScaledCard = (ctx, image, xPos, yPos) => {
     }
 }
 
-export const drawScaledImage = (ctx, image, xPos, yPos, width=IMAGE_WIDTH, height=IMAGE_HEIGHT) => {
+export const drawScaledImage = (ctx: CanvasRenderingContext2D, image: CanvasImageSource, xPos: number, yPos: number, width=IMAGE_WIDTH, height=IMAGE_HEIGHT) => {
     ctx.drawImage(
         image,
         applyPortalScaling(xPos),
@@ -115,7 +117,7 @@ export const drawScaledImage = (ctx, image, xPos, yPos, width=IMAGE_WIDTH, heigh
 }
 
 // scales a value based upon the differenes in the default vs current width (assumes consistent aspect ratio)
-export const applyPortalScaling = (value) => {
+export const applyPortalScaling = (value: number) => {
     if (USE_PORTAL_SCALING) { 
         return (portalWidth / WIDTH) * value;
     }
@@ -123,13 +125,13 @@ export const applyPortalScaling = (value) => {
   
 }
 
-export const resizedWindow = (widthIn, heightIn) => {
+export const resizedWindow = (widthIn: number, heightIn: number) => {
     portalHeight = heightIn;
     portalWidth = widthIn;
 };
 
 // all all the cards and highlighted cards outline
-export const renderCards = (ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY, scalingAnimationProgression) => {
+export const renderCards = (ctx: CanvasRenderingContext2D, rowsData: Array<RowObjectType>, selectedRow: number, unfinishedMovementY: number, translateY: number, animationStartTimeY: number, scalingAnimationProgression: number) => {
     let drawSelectedCardLast = () => {};
 
     for (let row = 0; row < rowsData.length; row++) {

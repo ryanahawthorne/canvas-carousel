@@ -1,4 +1,4 @@
-import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder } from './renderCards.js';
+import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder } from './renderCards';
 import {                     
     ANIMATION_DURATION,
     HOVER_TIMEOUT,
@@ -16,11 +16,12 @@ import {
     HEIGHT,
     USE_REQUEST_ANIMATION_FRAME,
     DEBUG,
-} from './constants.js';
+} from './constants';
+import { PopularResponseType, RowImageType, RowObjectType } from './types';
 
 
 // TODO move to helper functions module
-const easeOutQuint = (delta) => {
+const easeOutQuint = (delta: number) => {
     return 1 - Math.pow(1 - delta, 5);
 }
 
@@ -35,7 +36,7 @@ const easeOutQuint = (delta) => {
 // TODO show programme information and larger poster image when an item is selected for longer than HOVER_TIMEOUT
 // TODO add linting and build step
 
-const canvas = document.getElementById('canvas');
+const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
 const ctx = canvas.getContext('2d');
@@ -78,10 +79,10 @@ const isAnimating = () => {
     return value;
 }
 
-const rowsData = [];
+const rowsData: Array<RowObjectType> = [];
 const validKeyCodes = [37, 38, 39, 40];
 
-const onInteraction = (event) => {
+const onInteraction = (event: KeyboardEvent) => {
     event.preventDefault();
     const { keyCode } = event;
     if (!validKeyCodes.includes(keyCode)) {
@@ -151,7 +152,7 @@ const onInteraction = (event) => {
 
 document.addEventListener('keydown', onInteraction);
 
-const populateRowsData = (image) => {
+const populateRowsData = (image: HTMLImageElement) => {
     for (let rowNumber = 0; rowNumber < NUMBER_OF_ROWS; rowNumber++) {
         const images = [];
         for (let imageNumber = 0; imageNumber < IMAGES_PER_ROW; imageNumber++) {
@@ -159,7 +160,7 @@ const populateRowsData = (image) => {
                 image,  // this is loaded elsewhere
                 cardOriginalPositionX: imageNumber * (IMAGE_WIDTH + PADDING),
                 cardOriginalPositionY: rowNumber * (IMAGE_HEIGHT + PADDING),
-            })
+            } as RowImageType)
         }
         rowsData.push({
             images,
@@ -171,55 +172,50 @@ const populateRowsData = (image) => {
             targetTranslateX: 0, // the end translateX position of the animation upon completion of animation
             easingPosition: 0, // how far through x animation row is. Used for calculating scaling of highlighted image
             unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
-        });
+        } as RowObjectType);
     }
 };
 
-const loadImageArray = (urlInput) => {
-    const defaultUrl = `https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53`;
-    const url = urlInput ? urlInput : defaultUrl;
-    return fetch(url, {
+const loadImageArray = async (urlInput = 'https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53'): Promise<PopularResponseType> => {
+    const response = await fetch(urlInput, {
         method: 'GET'
-    }).then(function (response) {
-        if (response.ok) {
-            return response.json()
-        } else {
-            return Promise.reject(response);
-        }
-    })
+    });
+    if (response.ok) {
+        return response.json();
+    } else {
+        return Promise.reject(response);
+    }
 }
 
-const loadImage = (urlIn) => {
-    const defaultImage = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/${urlIn}.jpg`;
-    const url = urlIn ? urlIn : defaultImage;
+const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`load ${url} fail`));
-        img.src = url;
+        img.onerror = () => reject(new Error(`load ${imageUrl} fail`));
+        img.src = imageUrl;
     });
 };
 
 // once an image has loaded it's image, redraw it with the correct image rather than the default
 const loadImages = () => {
-    loadImageArray().then(function (data) {
-        data.results.forEach((image, index) => {
-            const rowNum = Math.floor(index / IMAGES_PER_ROW);
-            const imageNum = index - (rowNum * IMAGES_PER_ROW);
-            const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
-            // backdrop_path can be used for the background images on focus
-            loadImage(fullImageUrl).then(image => { // TODO callback to render image after loading is very basic and should instead draw the image based on it's real location in case things load in late
-                // update the data
-                rowsData[rowNum].images[imageNum].image = image;
-                const { translateX } = rowsData[rowNum];
-                const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
-                // but also redraw the image just now with loaded image
-                const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
-                const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
-                drawScaledCard(ctx, image, xPos, yPos);
+    loadImageArray().then((data) => {
+            data.results.forEach((image, index) => {
+                const rowNum = Math.floor(index / IMAGES_PER_ROW);
+                const imageNum = index - (rowNum * IMAGES_PER_ROW);
+                const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
+                // backdrop_path can be used for the background images on focus
+                loadImage(fullImageUrl).then(image => {
+                    // update the data
+                    rowsData[rowNum].images[imageNum].image = image;
+                    const { translateX } = rowsData[rowNum];
+                    const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
+                    // but also redraw the image just now with loaded image
+                    const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
+                    const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
+                    drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
+                });
             });
         })
-    })
 }
 
 loadImage(`https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/pSh8MyYu5CmfyWEHzv8FEARH2zq.jpg`).then(img => {
@@ -229,7 +225,7 @@ loadImage(`https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/pSh8MyYu5CmfyWEHzv8FEARH2z
 });
 
 // translate value changes position of everything on page on Y axis
-const updateYPosition = (easing) => {
+const updateYPosition = (easing: number) => {
     if (highlightCurrentPositionY > TARGET_POSITION_Y) { // down
         translateY = (targetTranslateY - SINGLE_MOVE_DISTANCE_Y) + ((SINGLE_MOVE_DISTANCE_Y + unfinishedMovementY) * easing);
     }
