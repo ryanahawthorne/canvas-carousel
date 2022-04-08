@@ -1,3 +1,3 @@
-const drawOverlay = (ctx) => {
+export const drawOverlay = (ctx) => {
     
 }
