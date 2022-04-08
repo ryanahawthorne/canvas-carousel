@@ -26,7 +26,10 @@
     "webpack-cli": "^4.9.2"
   },
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode production"
+    "build": "webpack --config webpack.config.js --mode production",
+    "fixdryrun": "eslint --fix-dry-run src/**",
+    "fix": "eslint --fix- src/**",
+    "lint": "eslint src/**"
   },
   "repository": {
     "type": "git",
