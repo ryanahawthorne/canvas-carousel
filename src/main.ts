@@ -44,19 +44,19 @@ const ctx = canvas.getContext('2d');
 let highlightCurrentPositionX = TARGET_POSITION_X;
 let highlightCurrentPositionY = TARGET_POSITION_Y;
 // let frameRate = 40; // target redraw timer speed if using setTimeout and not requestAnimationFrame
-let hoverTimer = null;
+let hoverTimer: number;
 let scalingAnimationProgression = 0; // how far through the current animation are we - used to scale highlightged image
-let animationStartTimeY = null; // will be date timer - dirty global
+let animationStartTimeY: number | null; // will be date timer - dirty global
 // find out most performant way to time this. Using dates or timers or performance.now?
-let timeElapsed = null; // will be date timer
+let timeElapsed: number | null; // will be date timer
 let selectedRow = 0; // row currently highlighted
 let translateY = 0; // modifier for Y position of entire carousel. Note individual rows have their own translate value
 let targetTranslateY = 0; // target position for Y animations when reaching final frame of animation.
 let unfinishedMovementY = 0; // if a new y animation starts before other finishes. Use this to calculate how much further the second animation needs to go
-let prevDirection = null; // TODO - HACK - this is a throttle on spamming up down as it causes a glitch somehow
+let prevDirection: string; // TODO - HACK - this is a throttle on spamming up down as it causes a glitch somehow
 
 // TODO Move this to helper functions. Is currently dupliated in renderCards.js
-const applyTranslate = (positionIn, translateIn) => {
+const applyTranslate = (positionIn: number, translateIn: number) => {
     return positionIn - translateIn;
 };
 
@@ -163,16 +163,16 @@ const populateRowsData = (image: HTMLImageElement) => {
             } as RowImageType)
         }
         rowsData.push({
-            images,
-            rowNumber,
-            highlightedCard: 0,
-            translateX: 0, // position offset from starting point
-            animationStartTime: null,
-            animationDirection: null,
-            targetTranslateX: 0, // the end translateX position of the animation upon completion of animation
-            easingPosition: 0, // how far through x animation row is. Used for calculating scaling of highlighted image
-            unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
-        } as RowObjectType);
+                images,
+                rowNumber,
+                highlightedCard: 0,
+                translateX: 0,
+                animationStartTime: null,
+                animationDirection: null,
+                targetTranslateX: 0,
+                easingPosition: 0,
+                unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
+            } as unknown as RowObjectType);
     }
 };
 
@@ -212,7 +212,9 @@ const loadImages = () => {
                     // but also redraw the image just now with loaded image
                     const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
                     const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
-                    drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
+                    if (ctx) {
+                        drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
+                    }
                 });
             });
         })
@@ -238,7 +240,9 @@ const updateYPosition = (easing: number) => {
 const draw = () => {
     // Clear canvas every time when function is called 
     // TODO optimisation - only clear the rows that are animating?
-    clearPortal(ctx);
+    if (ctx) {
+        clearPortal(ctx);
+    }
 
 
     // y position of highlighted card
@@ -266,10 +270,14 @@ const draw = () => {
             updateYPosition(easingPosition);
         }
     }
-    renderCards(ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY, scalingAnimationProgression);
+
+    if (ctx) {
+        renderCards(ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY!, scalingAnimationProgression);
+    }
+    
 
     // shows the outline of the visible page on a device with a locked aspect ratio
-    if (DEBUG) {
+    if (DEBUG && ctx) {
         drawCanvasBorder(ctx);
     }
     

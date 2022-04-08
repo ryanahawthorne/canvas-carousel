@@ -27,9 +27,9 @@ export type PopularResponseType = {
 
 export type RowObjectType = {
   unfinishedMovementX: number,
-  animationStartTime?: number,
+  animationStartTime: number | undefined | null,
   easingPosition: number,
-  animationDirection?: 'left' | 'right',
+  animationDirection?: 'left' | 'right' | 'top' | 'down',
   translateX: number,
   targetTranslateX: number,
   highlightedCard: number,
