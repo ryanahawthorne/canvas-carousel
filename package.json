@@ -1,0 +1,16 @@
+{
+  "name": "canvas-carousel",
+  "version": "0.0.1",
+  "description": "Canvas Carousel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanahawthorne/canvas-carousel.git"
+  },
+  "scripts": {
+    "build": "esbuild --bundle ./src/main.ts --outdir=dist --minify",
+    "build:dev": "esbuild --bundle ./src/main.ts --outdir=dist --servedir=dist"
+  },
+  "dependencies": {
+    "esbuild": "^0.14.34"
+  }
+}
