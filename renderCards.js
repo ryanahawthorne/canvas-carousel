@@ -19,9 +19,15 @@ let portalHeight = HEIGHT;
 
 
 // TODO move these to helper functions class
-const applyTranslate = (positionIn, translateIn) => {
+export const applyTranslate = (positionIn, translateIn) => {
     return positionIn - translateIn;
 };
+
+export const getDefaultImage = () => {
+    const defaultImage = new Image(IMAGE_WIDTH, IMAGE_HEIGHT); 
+    defaultImage.src = `public/defaultImage.jpg`;
+    return defaultImage;
+}
 
 const easeOutQuint = (delta) => {
     return 1 - Math.pow(1 - delta, 5);
@@ -129,13 +135,13 @@ export const resizedWindow = (widthIn, heightIn) => {
 };
 
 // all all the cards and highlighted cards outline
-export const renderCards = (ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY, scalingAnimationProgression) => {
+export const renderCards = (ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY, scalingAnimationProgression, forceDraw) => {
     let drawSelectedCardLast = () => {};
 
     for (let row = 0; row < rowsData.length; row++) {
         const rowObject = rowsData[row];
         let { unfinishedMovementX, animationStartTime } = rowObject;
-        if (animationStartTime) {
+        if (animationStartTime || forceDraw ) {
             const timeNow = Date.now();
             const timeElapsedX = timeNow - animationStartTime;
             const animationPosition = Math.min(timeElapsedX / ANIMATION_DURATION, 1); // how far through the animation we are from 0 (start) to 1 (end)
@@ -150,8 +156,8 @@ export const renderCards = (ctx, rowsData, selectedRow, unfinishedMovementY, tra
                 rowObject.animationStartTime = null;
             }
         }
-        for (let card = 0; card < rowsData[row].images.length; card++) {
-            const cardObject = rowObject.images[card]; // TODO rename this to card and integer to cardNumber
+        for (let card = 0; card < rowsData[row].cards.length; card++) {
+            const cardObject = rowObject.cards[card]; // TODO rename this to card and integer to cardNumber
             const { image, cardOriginalPositionX, cardOriginalPositionY } = cardObject;
             const xPos = applyTranslate(cardOriginalPositionX + unfinishedMovementX + TARGET_POSITION_X, rowObject.translateX); // translateX affects only current row
             const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y + unfinishedMovementY, translateY); // translateY affects all rows
