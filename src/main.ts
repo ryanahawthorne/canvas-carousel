@@ -1,4 +1,4 @@
-import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder, getDefaultImage } from './renderCards';
+import { renderCards, resizedWindow, clearPortal, drawCanvasBorder, getDefaultImage } from './renderCards';
 import {                     
     ANIMATION_DURATION,
     HOVER_TIMEOUT,
@@ -159,81 +159,6 @@ const startImages = () => {
 };
 
 startImages();
-
-// const populateRowsData = (image: HTMLImageElement) => {
-//     for (let rowNumber = 0; rowNumber < NUMBER_OF_ROWS; rowNumber++) {
-//         const images = [];
-//         for (let imageNumber = 0; imageNumber < IMAGES_PER_ROW; imageNumber++) {
-//             images.push({
-//                 image,  // this is loaded elsewhere
-//                 cardOriginalPositionX: imageNumber * (IMAGE_WIDTH + PADDING),
-//                 cardOriginalPositionY: rowNumber * (IMAGE_HEIGHT + PADDING),
-//             } as RowImageType)
-//         }
-//         rowsData.push({
-//                 images,
-//                 rowNumber,
-//                 highlightedCard: 0,
-//                 translateX: 0,
-//                 animationStartTime: null,
-//                 animationDirection: null,
-//                 targetTranslateX: 0,
-//                 easingPosition: 0,
-//                 unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
-//             } as unknown as RowObjectType);
-//     }
-// };
-
-// const loadImageArray = async (urlInput = 'https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53'): Promise<PopularResponseType> => {
-//     const response = await fetch(urlInput, {
-//         method: 'GET'
-//     });
-//     if (response.ok) {
-//         return response.json();
-//     } else {
-//         return Promise.reject(response);
-//     }
-// }
-
-// const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
-//     return new Promise((resolve, reject) => {
-//         const img = new Image();
-//         img.onload = () => resolve(img);
-//         img.onerror = () => reject(new Error(`load ${imageUrl} fail`));
-//         img.src = imageUrl;
-//     });
-// };
-
-// // once an image has loaded it's image, redraw it with the correct image rather than the default
-// const loadImages = () => {
-//     loadImageArray().then((data) => {
-//             data.results.forEach((image, index) => {
-//                 const rowNum = Math.floor(index / IMAGES_PER_ROW);
-//                 const imageNum = index - (rowNum * IMAGES_PER_ROW);
-//                 const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
-//                 // backdrop_path can be used for the background images on focus
-//                 loadImage(fullImageUrl).then(image => {
-//                     // update the data
-//                     rowsData[rowNum].images[imageNum].image = image;
-//                     const { translateX } = rowsData[rowNum];
-//                     const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
-//                     // but also redraw the image just now with loaded image
-//                     const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
-//                     const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
-//                     if (ctx) {
-//                         drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
-//                     }
-//                 });
-//             });
-//         })
-// }
-
-// loadImage(`https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/pSh8MyYu5CmfyWEHzv8FEARH2zq.jpg`).then(img => {
-//     populateRowsData(img);
-//     loadImages(); // TODO redrawing every canvas whenever an image loads is dreadful. Fix this!
-//     draw();
-// });
-
 
 // translate value changes position of everything on page on Y axis
 const updateYPosition = (easing: number) => {
