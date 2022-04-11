@@ -8,6 +8,7 @@ const rowsData = [];
 // TODO these two funtions should be kept in a helpers class
 import { drawScaledCard, applyTranslate } from "./renderCards.js";
 
+// grabs the list of available genres from the movie db
 const fetchGenres = () => {
   const url = `https://api.themoviedb.org/3/genre/movie/list?api_key=${authKey}&language=en-UK`;
   return fetch(url, {
@@ -21,6 +22,7 @@ const fetchGenres = () => {
   })
 };
 
+// Grabs a genre from the movie db using a genreID. This contains the top 20 movies in that genre.
 const fetchGenreRow = (genreId) => {
   const url = `https://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=10&api_key=${authKey}`;
   return fetch(url, {
@@ -34,9 +36,12 @@ const fetchGenreRow = (genreId) => {
   })
 }
 
+// randomly splices a genre out of the list of genres
 const getRandomGenre = () => {
   return genres.splice(Math.floor(Math.random()*genres.length), 1)[0];
 };
+
+// creates an image element from a supplied url
 export const loadImage = (urlIn) => {
     const url = urlIn ? urlIn : getDefaultImage();
     return new Promise((resolve, reject) => {
@@ -47,6 +52,7 @@ export const loadImage = (urlIn) => {
     });
 };
 
+// generates the rows data by random grabbing lists of popular titles from the list of genres supplied by the movie db
 export const getRowsData = (getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING ) => {
   const defaultImage = getDefaultImage();
   return new Promise((resolve, reject) => {
