@@ -1,4 +1,4 @@
-import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder, getDefaultImage } from './renderCards.js';
+import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder, getDefaultImage } from './renderCards';
 import {                     
     ANIMATION_DURATION,
     HOVER_TIMEOUT,
@@ -6,7 +6,6 @@ import {
     IMAGE_HEIGHT,
     PADDING,
     NUMBER_OF_ROWS,
-    TARGET_POSITION_X,
     TARGET_POSITION_Y,
     FRAME_RATE,
     SINGLE_MOVE_DISTANCE_X,
@@ -15,44 +14,45 @@ import {
     HEIGHT,
     USE_REQUEST_ANIMATION_FRAME,
     DEBUG,
-} from './constants.js';
+} from './constants';
 import {
     getRowsData,
     loadAndRenderImages,
-} from './api.js';
-
+} from './api';
+import { RowObjectType } from './types';
 
 // TODO move to helper functions module
-const easeOutQuint = (delta) => {
+const easeOutQuint = (delta: number) => {
     return 1 - Math.pow(1 - delta, 5);
 }
 
 // BUG fast up and down causes glitch - prevDirection and a timer hack used until this is fixed properly
+// TODO add carousel row titles - show highlighted carousel row title to the right that fades out over time
 // TODO move rest of cards drawing stuff out of main.js
 // TODO move Y rendering calculations from draw into separate module
 // TODO look at only fetching images for cards that are visible or soon to be visible
 // TODO rendering of loaded images using drawScaledCard() does not consider animation position. This could cause a bug where a late loaded image appears in the wrong place during a single animation frame
 // TODO show programme information and larger poster image when an item is selected for longer than HOVER_TIMEOUT
 
-const canvas = document.getElementById('canvas');
+const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
 const ctx = canvas.getContext('2d');
 
 let highlightCurrentPositionY = TARGET_POSITION_Y;
-let hoverTimer = null;
+let hoverTimer: number;
 let scalingAnimationProgression = 0; // how far through the current animation are we - used to scale highlightged image
-let animationStartTimeY = null; // will be date timer - dirty global
+let animationStartTimeY: number | null; // will be date timer - dirty global
 // find out most performant way to time this. Using dates or timers or performance.now?
-let timeElapsed = null; // will be date timer
+let timeElapsed: number | null; // will be date timer
 let selectedRow = 0; // row currently highlighted
 let translateY = 0; // modifier for Y position of entire carousel. Note individual rows have their own translate value
 let targetTranslateY = 0; // target position for Y animations when reaching final frame of animation.
 let unfinishedMovementY = 0; // if a new y animation starts before other finishes. Use this to calculate how much further the second animation needs to go
-let prevDirection = null; // TODO - HACK - this is a throttle on spamming up down as it causes a glitch somehow
+let prevDirection: string; // TODO - HACK - this is a throttle on spamming up down as it causes a glitch somehow
 
 // TODO Move this to helper functions. Is currently dupliated in renderCards.js
-const applyTranslate = (positionIn, translateIn) => {
+const applyTranslate = (positionIn: number, translateIn: number) => {
     return positionIn - translateIn;
 };
 
@@ -75,10 +75,10 @@ const isAnimating = () => {
     return value;
 }
 
-let rowsData = [];
+let rowsData: Array<RowObjectType> = [];
 const validKeyCodes = [37, 38, 39, 40];
 
-const onInteraction = (event) => {
+const onInteraction = (event: KeyboardEvent) => {
     event.preventDefault();
     const { keyCode } = event;
     if (!validKeyCodes.includes(keyCode)) {
@@ -147,10 +147,11 @@ const onInteraction = (event) => {
 
 document.addEventListener('keydown', onInteraction);
 
+
 const startImages = () => {
-    getRowsData(getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING ).then((res) => {
+    const defaultImage = getDefaultImage();
+    getRowsData(defaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING ).then((res) => {
         rowsData = res;
-        const defaultImage = getDefaultImage();
         // TODO this mutates rowsData - find a sensible way of handling that
         rowsData = loadAndRenderImages(res, ctx, translateY);
         draw();
@@ -159,8 +160,83 @@ const startImages = () => {
 
 startImages();
 
+// const populateRowsData = (image: HTMLImageElement) => {
+//     for (let rowNumber = 0; rowNumber < NUMBER_OF_ROWS; rowNumber++) {
+//         const images = [];
+//         for (let imageNumber = 0; imageNumber < IMAGES_PER_ROW; imageNumber++) {
+//             images.push({
+//                 image,  // this is loaded elsewhere
+//                 cardOriginalPositionX: imageNumber * (IMAGE_WIDTH + PADDING),
+//                 cardOriginalPositionY: rowNumber * (IMAGE_HEIGHT + PADDING),
+//             } as RowImageType)
+//         }
+//         rowsData.push({
+//                 images,
+//                 rowNumber,
+//                 highlightedCard: 0,
+//                 translateX: 0,
+//                 animationStartTime: null,
+//                 animationDirection: null,
+//                 targetTranslateX: 0,
+//                 easingPosition: 0,
+//                 unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
+//             } as unknown as RowObjectType);
+//     }
+// };
+
+// const loadImageArray = async (urlInput = 'https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53'): Promise<PopularResponseType> => {
+//     const response = await fetch(urlInput, {
+//         method: 'GET'
+//     });
+//     if (response.ok) {
+//         return response.json();
+//     } else {
+//         return Promise.reject(response);
+//     }
+// }
+
+// const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
+//     return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.onload = () => resolve(img);
+//         img.onerror = () => reject(new Error(`load ${imageUrl} fail`));
+//         img.src = imageUrl;
+//     });
+// };
+
+// // once an image has loaded it's image, redraw it with the correct image rather than the default
+// const loadImages = () => {
+//     loadImageArray().then((data) => {
+//             data.results.forEach((image, index) => {
+//                 const rowNum = Math.floor(index / IMAGES_PER_ROW);
+//                 const imageNum = index - (rowNum * IMAGES_PER_ROW);
+//                 const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
+//                 // backdrop_path can be used for the background images on focus
+//                 loadImage(fullImageUrl).then(image => {
+//                     // update the data
+//                     rowsData[rowNum].images[imageNum].image = image;
+//                     const { translateX } = rowsData[rowNum];
+//                     const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
+//                     // but also redraw the image just now with loaded image
+//                     const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
+//                     const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
+//                     if (ctx) {
+//                         drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
+//                     }
+//                 });
+//             });
+//         })
+// }
+
+// loadImage(`https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/pSh8MyYu5CmfyWEHzv8FEARH2zq.jpg`).then(img => {
+//     populateRowsData(img);
+//     loadImages(); // TODO redrawing every canvas whenever an image loads is dreadful. Fix this!
+//     draw();
+// });
+
+
 // translate value changes position of everything on page on Y axis
-const updateYPosition = (easing) => {
+const updateYPosition = (easing: number) => {
     if (highlightCurrentPositionY > TARGET_POSITION_Y) { // down
         translateY = (targetTranslateY - SINGLE_MOVE_DISTANCE_Y) + ((SINGLE_MOVE_DISTANCE_Y + unfinishedMovementY) * easing);
     }
@@ -173,7 +249,9 @@ const updateYPosition = (easing) => {
 const draw = () => {
     // Clear canvas every time when function is called 
     // TODO optimisation - only clear the rows that are animating?
-    clearPortal(ctx);
+    if (ctx) {
+        clearPortal(ctx);
+    }
 
 
     // y position of highlighted card
@@ -201,10 +279,14 @@ const draw = () => {
             updateYPosition(easingPosition);
         }
     }
-    renderCards(ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY, scalingAnimationProgression);
+
+    if (ctx) {
+        renderCards(ctx, rowsData, selectedRow, unfinishedMovementY, translateY, animationStartTimeY!, scalingAnimationProgression);
+    }
+    
 
     // shows the outline of the visible page on a device with a locked aspect ratio
-    if (DEBUG) {
+    if (DEBUG && ctx) {
         drawCanvasBorder(ctx);
     }
     

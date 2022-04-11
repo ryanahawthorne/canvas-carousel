@@ -1,9 +1,8 @@
-import { TARGET_POSITION_X, TARGET_POSITION_Y, IMAGE_WIDTH } from "./constants.js";
+import { TARGET_POSITION_X, TARGET_POSITION_Y, IMAGE_WIDTH } from "./constants";
+import { PopularResponseType, RowImageType, RowObjectType } from './types';
 
-const rows = []
 const authKey = 'c0140031611f36da79a4001affaad896';
-let genres = [];
-const rowsData = [];
+let genres: Array<RowObjectType> = [];
 // TODO these two funtions should be kept in a helpers class
 import { drawScaledCard, applyTranslate } from "./renderCards.js";
 
@@ -22,17 +21,16 @@ const fetchGenres = () => {
 };
 
 // Grabs a genre from the movie db using a genreID. This contains the top 20 movies in that genre.
-const fetchGenreRow = (genreId) => {
+const fetchGenreRow = async (genreId:number): Promise<PopularResponseType> => {
   const url = `https://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=10&api_key=${authKey}`;
-  return fetch(url, {
+  const response = await fetch(url, {
     method: 'GET'
-  }).then(function (response) {
-    if (response.ok) {
-      return response.json()
-    } else {
-      return Promise.reject(response);
-    }
-  })
+  });
+  if (response.ok) {
+    return response.json();
+  } else {
+    return Promise.reject(response);
+  }
 }
 
 // randomly splices a genre out of the list of genres
@@ -41,31 +39,31 @@ const getRandomGenre = () => {
 };
 
 // creates an image element from a supplied url
-export const loadImage = (urlIn) => {
-    const url = urlIn ? urlIn : getDefaultImage();
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`load ${url} fail`));
-        img.src = url;
-    });
+const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`load ${imageUrl} fail`));
+    img.src = imageUrl;
+  });
 };
 
 // generates the rows data by random grabbing lists of popular titles from the list of genres supplied by the movie db
-export const getRowsData = (getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING ) => {
-  const defaultImage = getDefaultImage();
+export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number, IMAGE_HEIGHT: number, PADDING: number) => {
   return new Promise((resolve, reject) => {
     fetchGenres().then((res) => {
       genres = res.genres;
       const intialRows = [];
-      const theRowsData = [];
+      const theRowsData: Array<RowObjectType> = [];
       intialRows.push(getRandomGenre());
       intialRows.push(getRandomGenre());
       intialRows.push(getRandomGenre());
       intialRows.push(getRandomGenre());
       let rowCounter = 0;
-      intialRows.forEach((rowIn, index) => {
+      intialRows.forEach((rowIn) => {
         fetchGenreRow(rowIn.id).then((res) => {
+          const { results } = res;
+          results.length = 10; // TODO only load assets that are going to be seen. Temporarily chopping the array in half until this is added
           const cards = res.results.map((card, cardIndex) => {
             const { original_title, overview, backdrop_path, poster_path, release_date } = card;
             return {
@@ -77,9 +75,10 @@ export const getRowsData = (getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING 
               backdrop_path,
               poster_path,
               release_date,
-            }
-          });
-          const row = {
+            } as RowImageType;
+          })
+          const row: RowObjectType = {
+            id: rowIn.id,
             cards,
             rowNumber: rowCounter,
             highlightedCard: 0,
@@ -91,7 +90,7 @@ export const getRowsData = (getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING 
             unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
           }
           rowCounter +=1 ;
-          theRowsData.push(row);
+          theRowsData.push(row)
           if (theRowsData.length === intialRows.length) {
             resolve(theRowsData);
           }
@@ -103,7 +102,7 @@ export const getRowsData = (getDefaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING 
 
 
 // loads and re-renders images
-export const loadAndRenderImages = (rowsData, ctx, translateY ) => {
+export const loadAndRenderImages = (rowsData: Array<RowObjectType>, ctx: CanvasRenderingContext2D, translateY: number ) => {
   rowsData.forEach((row, rowNum) => {
     row.cards.forEach((image, imageNum) => {
       const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
