@@ -1,4 +1,3 @@
-// import { getDefaultImage } from "./renderCards";
 import { TARGET_POSITION_X, TARGET_POSITION_Y, IMAGE_WIDTH } from "./constants.js";
 
 const rows = []
