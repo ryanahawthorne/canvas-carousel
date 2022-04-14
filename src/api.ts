@@ -4,7 +4,7 @@ import { PopularResponseType, RowImageType, RowObjectType } from './types';
 const authKey = 'c0140031611f36da79a4001affaad896';
 let genres: Array<RowObjectType> = [];
 // TODO these two funtions should be kept in a helpers class
-import { drawScaledCard, applyTranslate } from "./renderCards.js";
+import { drawScaledCard, applyTranslate } from "./renderCards";
 
 // grabs the list of available genres from the movie db
 const fetchGenres = () => {
