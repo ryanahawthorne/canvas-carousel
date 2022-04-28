@@ -1,4 +1,4 @@
-import { renderCards, resizedWindow, clearPortal, drawScaledCard, drawCanvasBorder } from './renderCards';
+import { renderCards, resizedWindow, clearPortal, drawCanvasBorder, getDefaultImage } from './renderCards';
 import {                     
     ANIMATION_DURATION,
     HOVER_TIMEOUT,
@@ -6,8 +6,6 @@ import {
     IMAGE_HEIGHT,
     PADDING,
     NUMBER_OF_ROWS,
-    IMAGES_PER_ROW,
-    TARGET_POSITION_X,
     TARGET_POSITION_Y,
     FRAME_RATE,
     SINGLE_MOVE_DISTANCE_X,
@@ -17,8 +15,11 @@ import {
     USE_REQUEST_ANIMATION_FRAME,
     DEBUG,
 } from './constants';
-import { PopularResponseType, RowImageType, RowObjectType } from './types';
-
+import {
+    getRowsData,
+    loadAndRenderImages,
+} from './api';
+import { RowObjectType } from './types';
 
 // TODO move to helper functions module
 const easeOutQuint = (delta: number) => {
@@ -26,24 +27,19 @@ const easeOutQuint = (delta: number) => {
 }
 
 // BUG fast up and down causes glitch - prevDirection and a timer hack used until this is fixed properly
-// TODO move API stuff to seperate module
+// TODO add carousel row titles - show highlighted carousel row title to the right that fades out over time
 // TODO move rest of cards drawing stuff out of main.js
-// TODO Replace default image with a local asset rather than loading a random image before replacing it
 // TODO move Y rendering calculations from draw into separate module
-// TODO fetch multiple carousels from API and remove or rework NUMBER_OF_ROWS and IMAGES_PER_ROW to be dynamic rather than hard-coded
 // TODO look at only fetching images for cards that are visible or soon to be visible
 // TODO rendering of loaded images using drawScaledCard() does not consider animation position. This could cause a bug where a late loaded image appears in the wrong place during a single animation frame
 // TODO show programme information and larger poster image when an item is selected for longer than HOVER_TIMEOUT
-// TODO add linting and build step
 
 const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
 const ctx = canvas.getContext('2d');
 
-let highlightCurrentPositionX = TARGET_POSITION_X;
 let highlightCurrentPositionY = TARGET_POSITION_Y;
-// let frameRate = 40; // target redraw timer speed if using setTimeout and not requestAnimationFrame
 let hoverTimer: number;
 let scalingAnimationProgression = 0; // how far through the current animation are we - used to scale highlightged image
 let animationStartTimeY: number | null; // will be date timer - dirty global
@@ -79,7 +75,7 @@ const isAnimating = () => {
     return value;
 }
 
-const rowsData: Array<RowObjectType> = [];
+let rowsData: Array<RowObjectType> = [];
 const validKeyCodes = [37, 38, 39, 40];
 
 const onInteraction = (event: KeyboardEvent) => {
@@ -123,7 +119,7 @@ const onInteraction = (event: KeyboardEvent) => {
             break;
 
         case 39: // right
-            if (selectedRowObject.highlightedCard < selectedRowObject.images.length - 1) { // boundary check
+            if (selectedRowObject.highlightedCard < selectedRowObject.cards.length - 1) { // boundary check
                 selectedRowObject.highlightedCard += 1;
                 selectedRowObject.animationStartTime = Date.now();
                 selectedRowObject.animationDirection = 'right';
@@ -138,7 +134,6 @@ const onInteraction = (event: KeyboardEvent) => {
                 if (prevDirection === 'up' && timeElapsed && timeElapsed < 175) {
                     return; // hack to fix a glitch when spamming up down. No idea what causes it.
                 }
-
                 selectedRow += 1;
                 animationStartTimeY = Date.now();
                 unfinishedMovementY = unfinishedMovementY + targetTranslateY - translateY;
@@ -152,79 +147,18 @@ const onInteraction = (event: KeyboardEvent) => {
 
 document.addEventListener('keydown', onInteraction);
 
-const populateRowsData = (image: HTMLImageElement) => {
-    for (let rowNumber = 0; rowNumber < NUMBER_OF_ROWS; rowNumber++) {
-        const images = [];
-        for (let imageNumber = 0; imageNumber < IMAGES_PER_ROW; imageNumber++) {
-            images.push({
-                image,  // this is loaded elsewhere
-                cardOriginalPositionX: imageNumber * (IMAGE_WIDTH + PADDING),
-                cardOriginalPositionY: rowNumber * (IMAGE_HEIGHT + PADDING),
-            } as RowImageType)
-        }
-        rowsData.push({
-                images,
-                rowNumber,
-                highlightedCard: 0,
-                translateX: 0,
-                animationStartTime: null,
-                animationDirection: null,
-                targetTranslateX: 0,
-                easingPosition: 0,
-                unfinishedMovementX: 0, // if we interrupt an X movement we need to include this in the new animation start position
-            } as unknown as RowObjectType);
-    }
-};
 
-const loadImageArray = async (urlInput = 'https://api.themoviedb.org/3/tv/popular?api_key=1e55f581404139e4f64065b2415ffe53'): Promise<PopularResponseType> => {
-    const response = await fetch(urlInput, {
-        method: 'GET'
-    });
-    if (response.ok) {
-        return response.json();
-    } else {
-        return Promise.reject(response);
-    }
-}
-
-const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`load ${imageUrl} fail`));
-        img.src = imageUrl;
+const startImages = () => {
+    const defaultImage = getDefaultImage();
+    getRowsData(defaultImage, IMAGE_WIDTH, IMAGE_HEIGHT, PADDING ).then((res) => {
+        rowsData = res;
+        // TODO this mutates rowsData - find a sensible way of handling that
+        rowsData = loadAndRenderImages(res, ctx, translateY);
+        draw();
     });
 };
 
-// once an image has loaded it's image, redraw it with the correct image rather than the default
-const loadImages = () => {
-    loadImageArray().then((data) => {
-            data.results.forEach((image, index) => {
-                const rowNum = Math.floor(index / IMAGES_PER_ROW);
-                const imageNum = index - (rowNum * IMAGES_PER_ROW);
-                const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
-                // backdrop_path can be used for the background images on focus
-                loadImage(fullImageUrl).then(image => {
-                    // update the data
-                    rowsData[rowNum].images[imageNum].image = image;
-                    const { translateX } = rowsData[rowNum];
-                    const { cardOriginalPositionX, cardOriginalPositionY } = rowsData[rowNum].images[imageNum];
-                    // but also redraw the image just now with loaded image
-                    const xPos = applyTranslate(cardOriginalPositionX + TARGET_POSITION_X, translateX);
-                    const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y, translateY);
-                    if (ctx) {
-                        drawScaledCard(ctx, image as CanvasImageSource, xPos, yPos);
-                    }
-                });
-            });
-        })
-}
-
-loadImage(`https://image.tmdb.org/t/p/w${IMAGE_WIDTH}/pSh8MyYu5CmfyWEHzv8FEARH2zq.jpg`).then(img => {
-    populateRowsData(img);
-    loadImages(); // TODO redrawing every canvas whenever an image loads is dreadful. Fix this!
-    draw();
-});
+startImages();
 
 // translate value changes position of everything on page on Y axis
 const updateYPosition = (easing: number) => {

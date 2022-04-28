@@ -15,7 +15,9 @@ export type PopularResultsResponseType = {
   backdrop_path: string
   overview: string
   poster_path: string
-  popularity: number
+  popularity: number,
+  original_title: string,
+  release_date: Date,
 }
 
 export type PopularResponseType = {
@@ -26,19 +28,25 @@ export type PopularResponseType = {
 }
 
 export type RowObjectType = {
+  id: number, // genre id
   unfinishedMovementX: number,
   animationStartTime: number | undefined | null,
   easingPosition: number,
-  animationDirection?: 'left' | 'right' | 'top' | 'down',
+  animationDirection?: 'left' | 'right' | 'top' | 'down' | null,
   translateX: number,
   targetTranslateX: number,
   highlightedCard: number,
   rowNumber: number,
-  images: Array<RowImageType>
+  cards: Array<RowImageType>,
 }
 
 export type RowImageType = {
   image: HTMLImageElement,
   cardOriginalPositionX: number,
   cardOriginalPositionY: number,
+  original_title: string,
+  overview: string,
+  backdrop_path: string,
+  poster_path: string,
+  release_date: Date,
 }

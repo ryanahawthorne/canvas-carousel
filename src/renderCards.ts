@@ -20,9 +20,15 @@ let portalHeight = HEIGHT;
 
 
 // TODO move these to helper functions class
-const applyTranslate = (positionIn: number, translateIn: number) => {
+export const applyTranslate = (positionIn: number, translateIn: number) => {
     return positionIn - translateIn;
 };
+
+export const getDefaultImage = () => {
+    const defaultImage = new Image(IMAGE_WIDTH, IMAGE_HEIGHT); 
+    defaultImage.src = `./defaultImage.jpg`;
+    return defaultImage;
+}
 
 const easeOutQuint = (delta: number) => {
     return 1 - Math.pow(1 - delta, 5);
@@ -152,8 +158,8 @@ export const renderCards = (ctx: CanvasRenderingContext2D, rowsData: Array<RowOb
                 rowObject.animationStartTime = null;
             }
         }
-        for (let card = 0; card < rowsData[row].images.length; card++) {
-            const cardObject = rowObject.images[card]; // TODO rename this to card and integer to cardNumber
+        for (let card = 0; card < rowsData[row].cards.length; card++) {
+            const cardObject = rowObject.cards[card]; // TODO rename this to card and integer to cardNumber
             const { image, cardOriginalPositionX, cardOriginalPositionY } = cardObject;
             const xPos = applyTranslate(cardOriginalPositionX + unfinishedMovementX + TARGET_POSITION_X, rowObject.translateX); // translateX affects only current row
             const yPos = applyTranslate(cardOriginalPositionY + TARGET_POSITION_Y + unfinishedMovementY, translateY); // translateY affects all rows
