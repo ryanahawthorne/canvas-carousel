@@ -37,7 +37,7 @@ const easeOutQuint = (delta: number) => {
 const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-const ctx = canvas.getContext('2d');
+const ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
 
 let highlightCurrentPositionY = TARGET_POSITION_Y;
 let hoverTimer: number;

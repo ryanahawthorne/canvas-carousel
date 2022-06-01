@@ -49,7 +49,7 @@ const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
 };
 
 // generates the rows data by random grabbing lists of popular titles from the list of genres supplied by the movie db
-export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number, IMAGE_HEIGHT: number, PADDING: number) => {
+export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number, IMAGE_HEIGHT: number, PADDING: number): Promise<Array<RowObjectType>> => {
   return new Promise((resolve, reject) => {
     fetchGenres().then((res) => {
       genres = res.genres;
