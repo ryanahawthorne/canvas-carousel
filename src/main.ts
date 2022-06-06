@@ -6,6 +6,7 @@ import {
     IMAGE_HEIGHT,
     PADDING,
     NUMBER_OF_ROWS,
+    TARGET_POSITION_X,
     TARGET_POSITION_Y,
     FRAME_RATE,
     SINGLE_MOVE_DISTANCE_X,
@@ -43,7 +44,6 @@ let highlightCurrentPositionY = TARGET_POSITION_Y;
 let hoverTimer: number;
 let scalingAnimationProgression = 0; // how far through the current animation are we - used to scale highlightged image
 let animationStartTimeY: number | null; // will be date timer - dirty global
-// find out most performant way to time this. Using dates or timers or performance.now?
 let timeElapsed: number | null; // will be date timer
 let selectedRow = 0; // row currently highlighted
 let translateY = 0; // modifier for Y position of entire carousel. Note individual rows have their own translate value
@@ -89,7 +89,58 @@ const onInteraction = (event: KeyboardEvent) => {
 
     clearHoverTimer();
 
+    const splitText = (text) => {
+        const arr = text.split(' ');
+        const results = [[]];
+        let charCount = 0;
+        let currentRow = 0;
+        let charLimit = 50;
+        arr.forEach((word)=> {
+            const currentRowCount = charCount + word.length;
+            if (currentRowCount > charLimit) { // todo detect if last word ended on full stop and create new line here too
+                currentRow += 1;
+                results.push([]);
+                charCount = 0;
+            }
+            charCount += word.length;
+            results[currentRow].push(word);
+        });
+        return results;
+    };
+
     hoverTimer = window.setTimeout(() => {
+
+        const selectedRowObject = rowsData[selectedRow];
+        const card = selectedRowObject.cards[selectedRowObject.highlightedCard];
+        const x = TARGET_POSITION_X + SINGLE_MOVE_DISTANCE_X + PADDING;
+        const y = PADDING;
+        const w = (WIDTH - x) - PADDING;
+        const h = HEIGHT - (PADDING * 2)
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = 'black';
+
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = 'white';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = `${PADDING*2}px serif`;
+        ctx.fillText(card.original_title, x + (w / 2), y + (PADDING * 2), w - PADDING);
+
+        ctx.font = `${PADDING}px serif`;
+        ctx.textAlign = 'left';
+        const formattedText = splitText(card.overview);
+        formattedText.forEach((textRow, index) => {
+            const text = textRow.join(' ');
+            ctx.fillText(text, x + PADDING, (y + ((PADDING * index) + PADDING * 2)) + (PADDING * 2), w - (PADDING * 2));
+        })
+
+        // todo draw image bigger and fillrect bigger. put description along bottom and leave space for video preview
+
+
+        ctx.globalAlpha = 1;
+        // ctx.fillText('Hello world', x + PADDING, w - PADDING);
+        
+        // ctx?.fillRect()
     }, HOVER_TIMEOUT);
 
     switch (keyCode) {
