@@ -8,11 +8,6 @@ module.exports = {
   watchOptions: {
     ignored: '**/node_modules',
   },
-  devtool: 'inline-source-map',
-//   devServer: {
-//    static: './dist',
-//    hot: true,
-//   },
   module: {
     rules: [
       {
@@ -35,9 +30,5 @@ module.exports = {
             { from: "./assets", to: "./" },
         ],
     })
-  ],
-  output: {
-    filename: 'main.js',
-    path: path.resolve(__dirname, 'dist'),
-  },
+  ]
 };

@@ -8,7 +8,7 @@ import { drawScaledCard, applyTranslate } from "./renderCards";
 
 // grabs the list of available genres from the movie db
 const fetchGenres = () => {
-  const url = `https://api.themoviedb.org/3/genre/movie/list?api_key=${authKey}&language=en-UK`;
+  const url = `http://api.themoviedb.org/3/genre/movie/list?api_key=${authKey}&language=en-UK`;
   return fetch(url, {
     method: 'GET'
   }).then(function (response) {
@@ -22,7 +22,7 @@ const fetchGenres = () => {
 
 // Grabs a genre from the movie db using a genreID. This contains the top 20 movies in that genre.
 const fetchGenreRow = async (genreId:number): Promise<PopularResponseType> => {
-  const url = `https://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=10&api_key=${authKey}`;
+  const url = `http://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=10&api_key=${authKey}`;
   const response = await fetch(url, {
     method: 'GET'
   });
@@ -50,7 +50,9 @@ const loadImage = (imageUrl: string): Promise<HTMLImageElement> => {
 
 // generates the rows data by random grabbing lists of popular titles from the list of genres supplied by the movie db
 export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number, IMAGE_HEIGHT: number, PADDING: number): Promise<Array<RowObjectType>> => {
+ 
   return new Promise((resolve, reject) => {
+     
     fetchGenres().then((res) => {
       genres = res.genres;
       const intialRows = [];
@@ -94,9 +96,9 @@ export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number,
           if (theRowsData.length === intialRows.length) {
             resolve(theRowsData);
           }
-        })
+        }).catch(err=>err);
       })
-    });
+    }).catch(err=>err);
   })
 };
 
@@ -105,7 +107,7 @@ export const getRowsData = (defaultImage: HTMLImageElement, IMAGE_WIDTH: number,
 export const loadAndRenderImages = (rowsData: Array<RowObjectType>, ctx: CanvasRenderingContext2D, translateY: number ) => {
   rowsData.forEach((row, rowNum) => {
     row.cards.forEach((image, imageNum) => {
-      const fullImageUrl = `https://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
+      const fullImageUrl = `http://image.tmdb.org/t/p/w${IMAGE_WIDTH}${image.poster_path}`;
       // backdrop_path can be used for the background images on focus
       loadImage(fullImageUrl).then(image => { // TODO callback to render image after loading is very basic and should instead draw the image based on it's real location in case things load in late
         // update the data

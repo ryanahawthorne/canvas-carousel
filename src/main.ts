@@ -1,3 +1,7 @@
+import 'core-js/features/promise';
+import 'core-js/features/array/includes';
+import 'whatwg-fetch';
+
 import { renderCards, resizedWindow, clearPortal, drawCanvasBorder, getDefaultImage } from './renderCards';
 import {                     
     ANIMATION_DURATION,
