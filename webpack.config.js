@@ -33,7 +33,7 @@ module.exports = {
         patterns: [
           { from: "./assets", to: "./" },
         ],
-      })
+    })
   ],
   output: {
     filename: 'main.js',
