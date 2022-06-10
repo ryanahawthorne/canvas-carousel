@@ -1,3 +1,7 @@
+import 'core-js/features/promise';
+import 'core-js/features/array/includes';
+import 'whatwg-fetch';
+
 import { renderCards, resizedWindow, clearPortal, drawCanvasBorder, getDefaultImage } from './renderCards';
 import {                     
     ANIMATION_DURATION,
@@ -37,7 +41,7 @@ const easeOutQuint = (delta: number) => {
 const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-const ctx = canvas.getContext('2d');
+const ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
 
 let highlightCurrentPositionY = TARGET_POSITION_Y;
 let hoverTimer: number;
